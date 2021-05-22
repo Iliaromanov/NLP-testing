@@ -29,20 +29,14 @@ nlp = spacy.load('en_core_web_sm')
 # Description containing 'no' are unparsable for now
 for row_num, row_data in data_to_clean.iterrows():
 
-    if row_num > 28:
-        break
-    
-    if row_num != 26:
-        tic = time.time()
-        continue
+    tic = time.time()
 
     # Text preprocessing. (THIS PART REALLY DEPENDS ON WHAT FEATURES YOU WANT TO EXTRACT AND YOUR DATA)
-    text = row_data['legal desc']
-    text = text.lower().replace('plt', '').replace('blk', 'block')
-    separated = wordninja.split(text)
-    text = ' '.join(separated)
-    text = text.replace('condominium plan', 'condoplan').replace('condo plan', 'condoplan').replace('lots', 'lot')
-    doc = nlp(text)
+    text = row_data['{name of free text field in data}']
+    text = text.lower() # also replace common abbreviations
+    separated = wordninja.split(text) # Use wordninja nlp model to split words into list; spaces not necessary for model to recognize words
+    text = ' '.join(separated) # join the tokenized list
+    doc = nlp(text) # apply spacy model
 
     print(f"row_num {row_num + 1}:")
     print(text)
@@ -55,7 +49,7 @@ for row_num, row_data in data_to_clean.iterrows():
 
     categ_start_indexes = [match[1] for match in matches]
     
-    parsed_result = {'PLAN': None, 'BLOCK': None, 'LOT': None, 'CONDOPLAN': None, 'UNIT': None, 'AdditionalText': None} # AGAIN DEPENDS ON features_to_extract
+    parsed_result = {'feature1': None, 'feature2': None, 'feature3': None, 'feature4': None, ..., 'AdditionalText': None} # AGAIN DEPENDS ON features_to_extract
 
     # Saving the parsed feature data to the parsed_result dict
     for i, match in enumerate(matches):
@@ -105,14 +99,14 @@ for row_num, row_data in data_to_clean.iterrows():
         update_extracted_features = f"""
                                      UPDATE {db_name}
                                          SET [{field}] = ?
-                                     WHERE FILERECORDID = ?
+                                     WHERE ID = ?
                                     """
         cursor.execute(update_extracted_features, [parsed_result[field], row_data['id']])
         conn.commit()
 
-    if row_num < 105:
-        toc = time.time()
-        print(f"time: {toc - tic}s")
+    
+    toc = time.time()
+    print(f"iteration time: {toc - tic}s")
     #print('\n~~~~\n')
 
 print("DONE")
